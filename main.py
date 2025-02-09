@@ -1,12 +1,3 @@
-from fastapi import FastAPI
-
-app = FastAPI()
-
-@app.get("/")
-def home():
-    return {"message": "FastAPI is running on Render!"}
-
-
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import requests
@@ -23,18 +14,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# API Endpoint
+# Root route to confirm app is running
+@app.get("/")
+def home():
+    return {"message": "FastAPI is running on Render!"}
+
+# Wikipedia Outline API Endpoint
 @app.get("/api/outline")
 async def get_country_outline(country: str = Query(..., description="Country name to fetch data for")):
     try:
         # Construct Wikipedia URL
         wiki_url = f"https://en.wikipedia.org/wiki/{country.replace(' ', '_')}"
-        
+
         # Fetch page content
         response = requests.get(wiki_url)
         if response.status_code != 200:
             return {"error": "Failed to fetch Wikipedia page"}
-        
+
         # Parse HTML content
         soup = BeautifulSoup(response.text, "lxml")
 
@@ -48,11 +44,6 @@ async def get_country_outline(country: str = Query(..., description="Country nam
             markdown_outline += f"{'#' * level} {heading.text.strip()}\n\n"
 
         return {"country": country, "outline": markdown_outline}
-    
+
     except Exception as e:
         return {"error": str(e)}
-
-# Run the application
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
